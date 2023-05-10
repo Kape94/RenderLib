@@ -1,0 +1,9 @@
+#ifndef _RENDERLIB_NAMESPACE_DEFS_H
+#define _RENDERLIB_NAMESPACE_DEFS_H
+
+#define BEGIN_RENDERLIB_NAMESPACE namespace RenderLib {
+#define END_RENDERLIB_NAMESPACE }
+
+#define USING_RENDERLIB_NAMESPACE using namespace RenderLib;
+
+#endif
