@@ -11,32 +11,81 @@ constexpr unsigned FLOAT_SIZE = sizeof(float);
 //---------------------------------------------------------------------------------------
 
 void Buffer::Create(
+  const std::vector<float>& vertexData,
+  const std::vector<unsigned>& indexData,
+  const ShaderAttributes& shaderAttributes
+)
+{
+  const unsigned vertexDataSize = static_cast<unsigned>(vertexData.size());
+  const unsigned indexDataSize = static_cast<unsigned>(indexData.size());
+  Create(vertexData.data(), vertexDataSize, indexData.data(), indexDataSize, shaderAttributes);
+}
+
+//---------------------------------------------------------------------------------------
+
+void Buffer::Create(
   const float* vertexData,
   const unsigned nVertexDataItems,
+  const unsigned* indexData,
+  const unsigned nIndexDataItems,
   const ShaderAttributes& shaderAttributes
+)
+{
+  LoadDataInGPU(vertexData, nVertexDataItems, indexData, nIndexDataItems);
+  LinkShaderAttributes(shaderAttributes);
+
+  this->nElements = nIndexDataItems;
+}
+
+//---------------------------------------------------------------------------------------
+
+void Buffer::LoadDataInGPU(
+  const float* vertexData,
+  const unsigned nVertexDataItems,
+  const unsigned* indexData,
+  const unsigned nIndexDataItems
 )
 {
   glGenVertexArrays(1, &this->VAO);
   glBindVertexArray(this->VAO);
 
+  LoadVertexDataInGPU(vertexData, nVertexDataItems);
+  LoadIndexDataInGPU(indexData, nIndexDataItems);
+}
+
+//---------------------------------------------------------------------------------------
+
+void Buffer::LoadVertexDataInGPU(
+  const float* vertexData,
+  const unsigned nVertexDataItems
+)
+{
   glGenBuffers(1, &this->VBO);
   glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
 
   glBufferData(GL_ARRAY_BUFFER, nVertexDataItems * sizeof(float), vertexData, GL_STATIC_DRAW);
+}
 
-  const unsigned nValuesPerVertex = ComputeNumberOfValuesPerVertex(shaderAttributes);
-  this->nVertices = nVertexDataItems / nValuesPerVertex;
+//---------------------------------------------------------------------------------------
 
-  LinkShaderAttributes(shaderAttributes, nValuesPerVertex);
+void Buffer::LoadIndexDataInGPU(
+  const unsigned* indexData,
+  const unsigned nIndexDataItems
+)
+{
+  glGenBuffers(1, &this->EBO);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
+
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, nIndexDataItems * sizeof(unsigned), indexData, GL_STATIC_DRAW);
 }
 
 //---------------------------------------------------------------------------------------
 
 void Buffer::LinkShaderAttributes(
-  const ShaderAttributes& shaderAttributes,
-  const unsigned nValuesPerVertex
+  const ShaderAttributes& shaderAttributes
 ) const
 {
+  const unsigned nValuesPerVertex = ComputeNumberOfValuesPerVertex(shaderAttributes);
   const unsigned totalVertexSize = nValuesPerVertex * FLOAT_SIZE;
 
   unsigned offset = 0;
@@ -75,9 +124,9 @@ void Buffer::Clear()
     glDeleteBuffers(1, &VBO);
     VBO = 0;
   }
-  if (IBO != 0) {
-    glDeleteBuffers(1, &IBO);
-    IBO = 0;
+  if (EBO != 0) {
+    glDeleteBuffers(1, &EBO);
+    EBO = 0;
   }
 }
 
@@ -85,7 +134,7 @@ void Buffer::Clear()
 
 void Buffer::Render() const
 {
-  glDrawArrays(GL_TRIANGLES, 0, this->nVertices);
+  glDrawElements(GL_TRIANGLES, this->nElements, GL_UNSIGNED_INT, 0);
 }
 
 //---------------------------------------------------------------------------------------
