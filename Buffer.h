@@ -18,6 +18,24 @@ class Buffer {
 
     using ShaderAttributes = std::initializer_list<ShaderAttribute>;
 
+    Buffer() = default;
+
+    Buffer(
+      const std::vector<float>& vertexData,
+      const std::vector<unsigned>& indexData,
+      const ShaderAttributes& shaderAttributes
+    );
+
+    Buffer(
+      const float* vertexData,
+      const unsigned nVertexDataItems,
+      const unsigned* indexData,
+      const unsigned nIndexDataItems,
+      const ShaderAttributes& shaderAttributes
+    );
+
+    ~Buffer();
+
     void Create(
       const std::vector<float>& vertexData,
       const std::vector<unsigned>& indexData,

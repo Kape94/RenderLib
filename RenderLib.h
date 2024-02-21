@@ -7,6 +7,13 @@ BEGIN_RENDERLIB_NAMESPACE
 
 void Initialize();
 
+void SetViewport(
+  const unsigned x,
+  const unsigned y,
+  const unsigned width,
+  const unsigned height
+);
+
 END_RENDERLIB_NAMESPACE
 
 

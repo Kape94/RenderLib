@@ -10,6 +10,37 @@ constexpr unsigned FLOAT_SIZE = sizeof(float);
 
 //---------------------------------------------------------------------------------------
 
+Buffer::Buffer(
+  const std::vector<float>& vertexData,
+  const std::vector<unsigned>& indexData,
+  const ShaderAttributes& shaderAttributes
+)
+{
+  Create(vertexData, indexData, shaderAttributes);
+}
+
+//---------------------------------------------------------------------------------------
+
+Buffer::Buffer(
+  const float* vertexData,
+  const unsigned nVertexDataItems,
+  const unsigned* indexData,
+  const unsigned nIndexDataItems,
+  const ShaderAttributes& shaderAttributes
+)
+{
+  Create(vertexData, nVertexDataItems, indexData, nIndexDataItems, shaderAttributes);
+}
+
+//---------------------------------------------------------------------------------------
+
+Buffer::~Buffer()
+{
+  Clear();
+}
+
+//---------------------------------------------------------------------------------------
+
 void Buffer::Create(
   const std::vector<float>& vertexData,
   const std::vector<unsigned>& indexData,
@@ -31,6 +62,8 @@ void Buffer::Create(
   const ShaderAttributes& shaderAttributes
 )
 {
+  Clear();
+
   LoadDataInGPU(vertexData, nVertexDataItems, indexData, nIndexDataItems);
   LinkShaderAttributes(shaderAttributes);
 
@@ -46,8 +79,8 @@ void Buffer::LoadDataInGPU(
   const unsigned nIndexDataItems
 )
 {
-  glGenVertexArrays(1, &this->VAO);
-  glBindVertexArray(this->VAO);
+  glGenVertexArrays(1, &VAO);
+  glBindVertexArray(VAO);
 
   LoadVertexDataInGPU(vertexData, nVertexDataItems);
   LoadIndexDataInGPU(indexData, nIndexDataItems);
@@ -60,8 +93,8 @@ void Buffer::LoadVertexDataInGPU(
   const unsigned nVertexDataItems
 )
 {
-  glGenBuffers(1, &this->VBO);
-  glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
+  glGenBuffers(1, &VBO);
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
   glBufferData(GL_ARRAY_BUFFER, nVertexDataItems * sizeof(float), vertexData, GL_STATIC_DRAW);
 }
@@ -73,8 +106,8 @@ void Buffer::LoadIndexDataInGPU(
   const unsigned nIndexDataItems
 )
 {
-  glGenBuffers(1, &this->EBO);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
+  glGenBuffers(1, &EBO);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, nIndexDataItems * sizeof(unsigned), indexData, GL_STATIC_DRAW);
 }
@@ -134,7 +167,8 @@ void Buffer::Clear()
 
 void Buffer::Render() const
 {
-  glDrawElements(GL_TRIANGLES, this->nElements, GL_UNSIGNED_INT, 0);
+  glBindVertexArray(VAO);
+  glDrawElements(GL_TRIANGLES, nElements, GL_UNSIGNED_INT, 0);
 }
 
 //---------------------------------------------------------------------------------------

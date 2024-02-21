@@ -6,11 +6,30 @@ USING_RENDERLIB_NAMESPACE
 
 //---------------------------------------------------------------------------------------
 
+Shader::Shader(
+  const char* vertexShaderCode,
+  const char* fragmentShaderCode
+)
+{
+  Create(vertexShaderCode, fragmentShaderCode);
+}
+
+//---------------------------------------------------------------------------------------
+
+Shader::~Shader()
+{
+  Clear();
+}
+
+//---------------------------------------------------------------------------------------
+
 void Shader::Create(
   const char* vertexShaderCode,
   const char* fragmentShaderCode
 )
 {
+  Clear();
+
   const unsigned vShaderID = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vShaderID, 1, &vertexShaderCode, nullptr);
   glCompileShader(vShaderID);
@@ -19,10 +38,10 @@ void Shader::Create(
   glShaderSource(fShaderID, 1, &fragmentShaderCode, nullptr);
   glCompileShader(fShaderID);
 
-  this->id = glCreateProgram();
-  glAttachShader(this->id, vShaderID);
-  glAttachShader(this->id, fShaderID);
-  glLinkProgram(this->id);
+  id = glCreateProgram();
+  glAttachShader(id, vShaderID);
+  glAttachShader(id, fShaderID);
+  glLinkProgram(id);
 
   glDeleteShader(vShaderID);
   glDeleteShader(fShaderID);
@@ -32,7 +51,7 @@ void Shader::Create(
 
 void Shader::Use()
 {
-  glUseProgram(this->id);
+  glUseProgram(id);
 }
 
 //---------------------------------------------------------------------------------------
@@ -42,9 +61,9 @@ void Shader::SetUniform(
   const TextureUnit& unit
 )
 {
-  const int location = glGetUniformLocation(this->id, name.c_str());
+  const int location = glGetUniformLocation(id, name.c_str());
   if (location != -1) {
-    glProgramUniform1i(this->id, location, static_cast<unsigned>(unit));
+    glProgramUniform1i(id, location, static_cast<unsigned>(unit));
   }
 }
 
@@ -52,9 +71,9 @@ void Shader::SetUniform(
 
 void Shader::Clear()
 {
-  if (this->id != 0) {
-    glDeleteProgram(this->id);
-    this->id = 0;
+  if (id != 0) {
+    glDeleteProgram(id);
+    id = 0;
   }
 }
 

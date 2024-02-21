@@ -8,15 +8,35 @@ USING_RENDERLIB_NAMESPACE
 
 //---------------------------------------------------------------------------------------
 
+Texture2D::Texture2D(
+  const unsigned char* data,
+  const unsigned width,
+  const unsigned height
+)
+{
+  Create(data, width, height);
+}
+
+//---------------------------------------------------------------------------------------
+
+Texture2D::~Texture2D()
+{
+  Clear();
+}
+
+//---------------------------------------------------------------------------------------
+
 void Texture2D::Create(
   const unsigned char* data,
   const unsigned width,
   const unsigned height
 )
 {
-  glGenTextures(1, &this->id);
+  Clear();
 
-  glBindTexture(GL_TEXTURE_2D, this->id);
+  glGenTextures(1, &id);
+
+  glBindTexture(GL_TEXTURE_2D, id);
 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -35,16 +55,23 @@ void Texture2D::Use(
 {  
   const unsigned textureUnitID = static_cast<unsigned>(textureUnit);
   glActiveTexture(GL_TEXTURE0 + textureUnitID);
-  glBindTexture(GL_TEXTURE_2D, this->id);
+  glBindTexture(GL_TEXTURE_2D, id);
+}
+
+//---------------------------------------------------------------------------------------
+
+unsigned Texture2D::GetId() const
+{
+  return id;
 }
 
 //---------------------------------------------------------------------------------------
 
 void Texture2D::Clear()
 {
-  if (this->id != 0) {
-    glDeleteTextures(1, &this->id);
-    this->id = 0;
+  if (id != 0) {
+    glDeleteTextures(1, &id);
+    id = 0;
   }
 }
 

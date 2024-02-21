@@ -11,6 +11,15 @@ BEGIN_RENDERLIB_NAMESPACE
 class Shader {
   public:
 
+    Shader() = default;
+
+    Shader(
+      const char* vertexShaderCode,
+      const char* fragmentShaderCode
+    );
+
+    ~Shader();
+
     void Create(
       const char* vertexShaderCode,
       const char* fragmentShaderCode
@@ -27,7 +36,7 @@ class Shader {
 
   private:
 
-    unsigned id;
+    unsigned id = 0;
 };
 
 END_RENDERLIB_NAMESPACE
