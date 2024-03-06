@@ -4,6 +4,9 @@
 #include "_internal/RenderLibNamespaceDefs.h"
 #include "TextureUnit.h"
 
+#include <glm/mat4x4.hpp>
+#include <glm/vec3.hpp>
+
 #include <string>
 
 BEGIN_RENDERLIB_NAMESPACE
@@ -27,14 +30,28 @@ class Shader {
 
     void Use();
 
+    void Clear();
+
     void SetUniform(
       const std::string& name,
       const TextureUnit& unit
     );
 
-    void Clear();
+    void SetUniform(
+      const std::string& name,
+      const glm::mat4x4& matrix
+    );
+
+    void SetUniform(
+      const std::string& name,
+      const glm::vec3& vector
+    );
 
   private:
+
+    int GetUniformLocation(
+      const std::string& name
+    ) const;
 
     unsigned id = 0;
 };

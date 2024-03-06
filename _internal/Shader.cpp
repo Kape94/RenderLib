@@ -2,6 +2,8 @@
 
 #include "_internal/OpenGLDefs.h"
 
+#include <glm/gtc/type_ptr.hpp>
+
 USING_RENDERLIB_NAMESPACE
 
 //---------------------------------------------------------------------------------------
@@ -61,10 +63,45 @@ void Shader::SetUniform(
   const TextureUnit& unit
 )
 {
-  const int location = glGetUniformLocation(id, name.c_str());
+  const int location = GetUniformLocation(name);
   if (location != -1) {
     glProgramUniform1i(id, location, static_cast<unsigned>(unit));
   }
+}
+
+//---------------------------------------------------------------------------------------
+
+void Shader::SetUniform(
+  const std::string& name,
+  const glm::mat4x4& matrix
+)
+{
+  const int location = GetUniformLocation(name);
+  if (location != -1) {
+    glUniformMatrix4fv(location, 1, GL_FALSE/*transpose*/, glm::value_ptr(matrix));
+  }
+}
+
+//---------------------------------------------------------------------------------------
+
+void Shader::SetUniform(
+  const std::string& name,
+  const glm::vec3& vector
+)
+{
+  const int location = GetUniformLocation(name);
+  if (location != -1) {
+    glUniform3f(location, vector.x, vector.y, vector.z);
+  }
+}
+
+//---------------------------------------------------------------------------------------
+
+int Shader::GetUniformLocation(
+  const std::string& name
+) const
+{
+  return glGetUniformLocation(id, name.c_str());
 }
 
 //---------------------------------------------------------------------------------------
