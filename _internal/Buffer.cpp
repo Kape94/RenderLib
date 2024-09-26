@@ -6,10 +6,6 @@ USING_RENDERLIB_NAMESPACE
 
 //---------------------------------------------------------------------------------------
 
-constexpr unsigned FLOAT_SIZE = sizeof(float);
-
-//---------------------------------------------------------------------------------------
-
 Buffer::Buffer(
   const std::vector<float>& vertexData,
   const std::vector<unsigned>& indexData,
@@ -72,6 +68,29 @@ void Buffer::Create(
 
 //---------------------------------------------------------------------------------------
 
+void Buffer::CreateInstanced(
+  const float* vertexData,
+  const unsigned nVertexDataItems,
+  const unsigned* indexData,
+  const unsigned nIndexDataItems,
+  const ShaderAttributes& shaderAttributes,
+  const void* instancedData,
+  const unsigned instanceDataSize,
+  const unsigned nInstances,
+  const ShaderAttributes& instanceShaderAttributes
+)
+{
+  Create(vertexData, nVertexDataItems, indexData, nIndexDataItems, shaderAttributes);
+
+  LoadInstancedDataInGPU(instancedData, instanceDataSize, nInstances);
+  LinkInstancedShaderAttributes(instanceShaderAttributes);
+
+  this->isInstanced = true;
+  this->nInstances = nInstances;
+}
+
+//---------------------------------------------------------------------------------------
+
 void Buffer::LoadDataInGPU(
   const float* vertexData,
   const unsigned nVertexDataItems,
@@ -93,10 +112,8 @@ void Buffer::LoadVertexDataInGPU(
   const unsigned nVertexDataItems
 )
 {
-  glGenBuffers(1, &VBO);
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-  glBufferData(GL_ARRAY_BUFFER, nVertexDataItems * sizeof(float), vertexData, GL_STATIC_DRAW);
+  const unsigned vertexDataSize = nVertexDataItems * sizeof(float);
+  this->VBO = CreateBufferAndLoadData(GL_ARRAY_BUFFER, vertexData, vertexDataSize);
 }
 
 //---------------------------------------------------------------------------------------
@@ -106,10 +123,40 @@ void Buffer::LoadIndexDataInGPU(
   const unsigned nIndexDataItems
 )
 {
-  glGenBuffers(1, &EBO);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+  const unsigned indexDataSize = nIndexDataItems * sizeof(unsigned);
+  this->EBO = CreateBufferAndLoadData(GL_ELEMENT_ARRAY_BUFFER, indexData, indexDataSize);
+}
 
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, nIndexDataItems * sizeof(unsigned), indexData, GL_STATIC_DRAW);
+//---------------------------------------------------------------------------------------
+
+void Buffer::LoadInstancedDataInGPU(
+  const void* instancedData,
+  const unsigned instanceDataSize,
+  const unsigned nInstances
+)
+{
+  this->instancedVBO = CreateBufferAndLoadData(
+    GL_ARRAY_BUFFER,
+    instancedData,
+    instanceDataSize * nInstances
+  );
+}
+
+//---------------------------------------------------------------------------------------
+
+unsigned Buffer::CreateBufferAndLoadData(
+  const unsigned bufferType,
+  const void* data,
+  const unsigned dataSize
+)
+{
+  unsigned newVBO;
+  glGenBuffers(1, &newVBO);
+  glBindBuffer(bufferType, newVBO);
+
+  glBufferData(bufferType, dataSize, data, GL_STATIC_DRAW);
+
+  return newVBO;
 }
 
 //---------------------------------------------------------------------------------------
@@ -118,31 +165,60 @@ void Buffer::LinkShaderAttributes(
   const ShaderAttributes& shaderAttributes
 ) const
 {
-  const unsigned nValuesPerVertex = ComputeNumberOfValuesPerVertex(shaderAttributes);
-  const unsigned totalVertexSize = nValuesPerVertex * FLOAT_SIZE;
+  const unsigned totalVertexSize = ComputeTotalSizeOfAttributes(shaderAttributes);
 
   unsigned offset = 0;
   for (const ShaderAttribute& attribute : shaderAttributes) {
-    const unsigned attributeLocation = attribute.attributeLocation;
-    const unsigned nValues = attribute.nValues;
-    glVertexAttribPointer(attributeLocation, nValues, GL_FLOAT, GL_FALSE, totalVertexSize, (void*)offset);
-    glEnableVertexAttribArray(attributeLocation);
+    LinkShaderAttribute(attribute, offset, totalVertexSize);
 
-    offset += nValues * FLOAT_SIZE;
+    offset += attribute.DataSizeInBytes();
   }
 }
 
 //---------------------------------------------------------------------------------------
 
-unsigned Buffer::ComputeNumberOfValuesPerVertex(
+void Buffer::LinkShaderAttribute(
+  const ShaderAttribute& attr,
+  const unsigned offset,
+  const unsigned totalAttributeSize
+) const
+{
+  const unsigned location = attr.Location();
+
+  glVertexAttribPointer(
+    location,
+    attr.NEntries(),
+    attr.DataType(),
+    GL_FALSE,
+    totalAttributeSize,
+    (void*)offset
+  );
+  glEnableVertexAttribArray(location);
+}
+
+//---------------------------------------------------------------------------------------
+
+unsigned Buffer::ComputeTotalSizeOfAttributes(
   const ShaderAttributes& attrs
 ) const
 {
-  unsigned nAttributeValues = 0;
+  unsigned totalSize = 0;
   for (const ShaderAttribute& attr : attrs) {
-    nAttributeValues += attr.nValues;
+    totalSize += attr.DataSizeInBytes();
   }
-  return nAttributeValues;
+  return totalSize;
+}
+
+//---------------------------------------------------------------------------------------
+
+void Buffer::LinkInstancedShaderAttributes(
+  const ShaderAttributes& attrs
+) const
+{
+  LinkShaderAttributes(attrs);
+  for (const ShaderAttribute& attr : attrs) {
+    glVertexAttribDivisor(attr.Location(), 1);
+  }
 }
 
 //---------------------------------------------------------------------------------------
@@ -161,6 +237,10 @@ void Buffer::Clear()
     glDeleteBuffers(1, &EBO);
     EBO = 0;
   }
+  if (instancedVBO != 0) {
+    glDeleteBuffers(1, &instancedVBO);
+    instancedVBO = 0;
+  }
 }
 
 //---------------------------------------------------------------------------------------
@@ -168,7 +248,12 @@ void Buffer::Clear()
 void Buffer::Render() const
 {
   glBindVertexArray(VAO);
-  glDrawElements(GL_TRIANGLES, nElements, GL_UNSIGNED_INT, 0);
+  if (this->isInstanced) {
+    glDrawElementsInstanced(GL_TRIANGLES, nElements, GL_UNSIGNED_INT, 0, nInstances);
+  }
+  else {
+    glDrawElements(GL_TRIANGLES, nElements, GL_UNSIGNED_INT, 0);
+  }
 }
 
 //---------------------------------------------------------------------------------------

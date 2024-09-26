@@ -1,22 +1,16 @@
 #ifndef _RENDERLIB_BUFFER_H
 #define _RENDERLIB_BUFFER_H
 
+#include <vector>
+
 #include "_internal/RenderLibNamespaceDefs.h"
 
-#include <initializer_list>
-#include <vector>
+#include "ShaderAttribute.h"
 
 BEGIN_RENDERLIB_NAMESPACE
 
 class Buffer {
   public:
-
-    using ShaderAttribute = struct {
-      const unsigned attributeLocation;
-      const unsigned nValues;
-    };
-
-    using ShaderAttributes = std::initializer_list<ShaderAttribute>;
 
     Buffer() = default;
 
@@ -50,6 +44,18 @@ class Buffer {
       const ShaderAttributes& shaderAttributes
     );
 
+    void CreateInstanced(
+      const float* vertexData,
+      const unsigned nVertexDataItems,
+      const unsigned* indexData,
+      const unsigned nIndexDataItems,
+      const ShaderAttributes& shaderAttributes,
+      const void* instancedData,
+      const unsigned instancedDataSize,
+      const unsigned nInstances,
+      const ShaderAttributes& instanceShaderAttributes
+    );
+
     void Clear();
 
     void Render() const;
@@ -73,19 +79,45 @@ class Buffer {
       const unsigned nIndexDataItems
     );
 
+    void LoadInstancedDataInGPU(
+      const void* instancedData,
+      const unsigned instanceDataSize,
+      const unsigned nInstances
+    );
+
+    unsigned CreateBufferAndLoadData(
+      const unsigned bufferType,
+      const void* data,
+      const unsigned dataSize
+    );
+
     void LinkShaderAttributes(
       const ShaderAttributes& shaderAttributes
     ) const;
 
-    unsigned ComputeNumberOfValuesPerVertex(
+    void LinkShaderAttribute(
+      const ShaderAttribute& attr,
+      const unsigned offset,
+      const unsigned totalAttributeSize
+    ) const;
+
+    unsigned ComputeTotalSizeOfAttributes(
+      const ShaderAttributes& attrs
+    ) const;
+
+    void LinkInstancedShaderAttributes(
       const ShaderAttributes& attrs
     ) const;
 
     unsigned VAO = 0;
     unsigned VBO = 0;
     unsigned EBO = 0;
+    unsigned instancedVBO = 0;
 
     unsigned nElements = 0;
+
+    bool isInstanced = false;
+    unsigned nInstances = 0;
 };
 
 END_RENDERLIB_NAMESPACE
