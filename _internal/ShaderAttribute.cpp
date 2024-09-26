@@ -1,6 +1,6 @@
 #include "ShaderAttribute.h"
 
-#include "GL/glew.h"
+#include "_internal/OpenGLDefs.h"
 
 namespace ShaderAttributeUtils {
   unsigned sizeOfDataType(

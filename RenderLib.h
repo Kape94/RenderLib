@@ -14,6 +14,13 @@ void SetViewport(
   const unsigned height
 );
 
+void Clear(
+  const float r = 0.0f,
+  const float g = 0.0f,
+  const float b = 0.0f,
+  const float a = 0.0f
+);
+
 END_RENDERLIB_NAMESPACE
 
 
