@@ -15,6 +15,14 @@ class Buffer {
     Buffer() = default;
 
     Buffer(
+      Buffer&& other
+    ) noexcept;
+
+    Buffer& operator=(
+      Buffer&& other
+    ) noexcept;
+
+    Buffer(
       const std::vector<float>& vertexData,
       const std::vector<unsigned>& indexData,
       const ShaderAttributes& shaderAttributes

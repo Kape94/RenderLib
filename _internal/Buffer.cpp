@@ -7,6 +7,55 @@ USING_RENDERLIB_NAMESPACE
 //---------------------------------------------------------------------------------------
 
 Buffer::Buffer(
+  Buffer&& other
+) noexcept :
+  VAO(other.VAO),
+  VBO(other.VBO),
+  EBO(other.EBO),
+  instancedVBO(other.instancedVBO),
+  nElements(other.nElements),
+  isInstanced(other.isInstanced),
+  nInstances(other.nInstances)
+{
+  other.VAO = 0;
+  other.VBO = 0;
+  other.EBO = 0;
+  other.instancedVBO = 0;
+  other.nElements = 0;
+  other.isInstanced = false;
+  other.nInstances = 0;
+}
+
+//---------------------------------------------------------------------------------------
+
+Buffer& Buffer::operator=(
+  Buffer&& other
+) noexcept
+{
+  if (&other != this) {
+    VAO = other.VAO;
+    VBO = other.VBO;
+    EBO = other.EBO;
+    instancedVBO = other.instancedVBO;
+    nElements = other.nElements;
+    isInstanced = other.isInstanced;
+    nInstances = other.nInstances;
+
+    other.VAO = 0;
+    other.VBO = 0;
+    other.EBO = 0;
+    other.instancedVBO = 0;
+    other.nElements = 0;
+    other.isInstanced = false;
+    other.nInstances = 0;
+  }
+
+  return *this;
+}
+
+//---------------------------------------------------------------------------------------
+
+Buffer::Buffer(
   const std::vector<float>& vertexData,
   const std::vector<unsigned>& indexData,
   const ShaderAttributes& shaderAttributes
